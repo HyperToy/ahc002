@@ -31,6 +31,18 @@ do
 done
 echo "execution done"
 
+if [ "$loop_stop" -lt 99 ]; then
+    vis_stop="$loop_stop"
+else
+    vis_stop=99
+fi
+echo "<html><body>" > vis.html
+for i in `seq -f '%04g' 0 $vis_stop`
+do
+    echo "<img src=\"vis/$i.svg\">" >> vis.html
+done
+echo "</body><html>" >> vis.html
+
 cd ..
 scores=scores.txt
 date "+%Y-%m-%d %H:%M:%S" >> $scores
