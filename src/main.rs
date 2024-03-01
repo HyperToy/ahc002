@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 #![allow(unused_variables)]
+#![allow(unused_assignments)]
 
 use proconio::input;
 
@@ -53,7 +54,8 @@ impl Dfs {
         let mut score = self.score[sy as usize][sx as usize];
 
         let mut best_dir = 0;
-        let mut best_score = 0;
+        let mut best_score = -1;
+        let mut exist_next = false;
         for k in 0..4 {
             let (ny, nx) = (sy + DIR[k].0, sx + DIR[k].1);
             if !self.in_field(ny, nx) {
@@ -63,20 +65,22 @@ impl Dfs {
             if self.seen[self.tile[ny][nx]] {
                 continue;
             }
+            exist_next = true;
             if self.score[ny][nx] > best_score {
                 best_score = self.score[ny][nx];
                 best_dir = k;
             }
         }
-        let (ny, nx) = (
-            (sy + DIR[best_dir].0) as usize,
-            (sx + DIR[best_dir].1) as usize,
-        );
-        self.seen[self.tile[ny][nx]] = true;
-        answer += DIR_STRING[best_dir];
-        score += self.score[ny][nx];
-
-        eprintln!("score : {}", score);
+        if exist_next {
+            let (ny, nx) = (
+                (sy + DIR[best_dir].0) as usize,
+                (sx + DIR[best_dir].1) as usize,
+            );
+            self.seen[self.tile[ny][nx]] = true;
+            answer += DIR_STRING[best_dir];
+            score += self.score[ny][nx];
+            answer += self.exec(Point(ny as isize, nx as isize)).as_str();
+        }
         answer
     }
     fn in_field(&self, i: isize, j: isize) -> bool {
