@@ -5,9 +5,8 @@
 use proconio::input;
 
 // ↓ → ↑ ←
-const IDY: [isize; 4] = [1, 0, -1, 0];
-const IDX: [isize; 4] = [0, 1, 0, -1];
-const IDIR: [&str; 4] = ["D", "R", "U", "L"];
+const DIR: [(isize, isize); 4] = [(1, 0), (0, 1), (-1, 0), (0, -1)];
+const DIR_STRING: [&str; 4] = ["D", "R", "U", "L"];
 
 fn main() {
     let (H, W) = (50, 50);
@@ -16,17 +15,13 @@ fn main() {
         tile: [[usize; W]; H],
         score: [[i32; W]; H],
     }
+    let mut dfs = Dfs::new(tile, score);
     let start = Point(si, sj);
-    let M = 1 + *tile
-        .iter()
-        .map(|row| row.iter().max().unwrap())
-        .max()
-        .unwrap();
-    let mut dfs = Dfs::new(tile, score, M);
     let answer = dfs.exec(start);
     println!("{}", answer);
 }
 
+#[derive(PartialEq, Eq)]
 struct Point(isize, isize);
 
 struct Dfs {
@@ -37,7 +32,12 @@ struct Dfs {
     seen: Vec<bool>,
 }
 impl Dfs {
-    fn new(tile: Vec<Vec<usize>>, score: Vec<Vec<i32>>, M: usize) -> Self {
+    fn new(tile: Vec<Vec<usize>>, score: Vec<Vec<i32>>) -> Self {
+        let M = 1 + *tile
+            .iter()
+            .map(|row| row.iter().max().unwrap())
+            .max()
+            .unwrap();
         Self {
             H: tile.len(),
             W: tile[0].len(),
@@ -51,21 +51,31 @@ impl Dfs {
         self.seen[self.tile[sy as usize][sx as usize]] = true;
         let mut answer = String::new();
         let mut score = self.score[sy as usize][sx as usize];
+
+        let mut best_dir = 0;
+        let mut best_score = 0;
         for k in 0..4 {
-            let (ny, nx) = (sy + IDY[k], sx + IDX[k]);
+            let (ny, nx) = (sy + DIR[k].0, sx + DIR[k].1);
             if !self.in_field(ny, nx) {
                 continue;
             }
             let (ny, nx) = (ny as usize, nx as usize);
-            // let (sy, sx) = (sy as usize, sx as usize);
             if self.seen[self.tile[ny][nx]] {
                 continue;
             }
-            self.seen[self.tile[ny][nx]] = true;
-            answer += IDIR[k];
-            score += self.score[ny][nx];
-            break;
+            if self.score[ny][nx] > best_score {
+                best_score = self.score[ny][nx];
+                best_dir = k;
+            }
         }
+        let (ny, nx) = (
+            (sy + DIR[best_dir].0) as usize,
+            (sx + DIR[best_dir].1) as usize,
+        );
+        self.seen[self.tile[ny][nx]] = true;
+        answer += DIR_STRING[best_dir];
+        score += self.score[ny][nx];
+
         eprintln!("score : {}", score);
         answer
     }
