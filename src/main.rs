@@ -1,63 +1,80 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 #![allow(unused_variables)]
-#![allow(unused_assignments)]
+// #![allow(unused_assignments)]
 
 use proconio::input;
 
 // ↓ → ↑ ←
 const DIR: [(isize, isize); 4] = [(1, 0), (0, 1), (-1, 0), (0, -1)];
 const DIR_STRING: [&str; 4] = ["D", "R", "U", "L"];
+const H: usize = 50;
+const W: usize = 50;
 
 fn main() {
-    let (H, W) = (50, 50);
     input! {
-        (si, sj): (isize, isize),
+        (si, sj): (usize, usize),
         tile: [[usize; W]; H],
         score: [[i32; W]; H],
     }
-    let mut dfs = Dfs::new(tile, score);
-    let start = Point(si, sj);
-    let answer = dfs.exec(start);
-    println!("{}", answer);
+    let mut solver = DfsSolver::new(tile, score);
+    let start = Point::new(si, sj);
+    solver.dfs(start);
+    println!("{}", solver.answer());
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct Point(isize, isize);
+impl Point {
+    fn new(y: usize, x: usize) -> Self {
+        Point(y as isize, x as isize)
+    }
+}
 
-struct Dfs {
-    H: usize,
-    W: usize,
+struct DfsSolver {
     tile: Vec<Vec<usize>>,
     score: Vec<Vec<i32>>,
     seen: Vec<bool>,
+    best_path: Vec<Point>,
+    best_score: i32,
+    now_path: Vec<Point>,
+    now_score: i32,
+    remaining_search_cnt: i32,
 }
-impl Dfs {
+impl DfsSolver {
     fn new(tile: Vec<Vec<usize>>, score: Vec<Vec<i32>>) -> Self {
-        let M = 1 + *tile
-            .iter()
-            .map(|row| row.iter().max().unwrap())
-            .max()
-            .unwrap();
         Self {
-            H: tile.len(),
-            W: tile[0].len(),
             tile,
             score,
-            seen: vec![false; M],
+            seen: vec![false; H * W],
+            best_path: Vec::new(),
+            best_score: 0,
+            now_path: Vec::new(),
+            now_score: 0,
+            remaining_search_cnt: 1_000_000,
         }
     }
-    fn exec(&mut self, start: Point) -> String {
-        let (sy, sx) = (start.0, start.1);
-        self.seen[self.tile[sy as usize][sx as usize]] = true;
-        let mut answer = String::new();
-        let mut score = self.score[sy as usize][sx as usize];
+    fn dfs(&mut self, point: Point) -> () {
+        let (y, x) = (point.0, point.1);
+        self.now_path.push(point);
+        self.now_score += self.score[y as usize][x as usize];
+        self.seen[self.tile[y as usize][x as usize]] = true;
 
-        let mut best_dir = 0;
-        let mut best_score = -1;
-        let mut exist_next = false;
+        // スコアがよくなればパスを更新
+        if self.now_score > self.best_score {
+            self.best_score = self.now_score;
+            self.best_path = self.now_path.clone();
+        }
+
+        // 残り探索回数を減らして終了判定
+        self.remaining_search_cnt -= 1;
+        if self.remaining_search_cnt == 0 {
+            return;
+        }
+
+        // 次の場所を探す
         for k in 0..4 {
-            let (ny, nx) = (sy + DIR[k].0, sx + DIR[k].1);
+            let (ny, nx) = (y + DIR[k].0, x + DIR[k].1);
             if !self.in_field(ny, nx) {
                 continue;
             }
@@ -65,25 +82,30 @@ impl Dfs {
             if self.seen[self.tile[ny][nx]] {
                 continue;
             }
-            exist_next = true;
-            if self.score[ny][nx] > best_score {
-                best_score = self.score[ny][nx];
-                best_dir = k;
+            self.dfs(Point::new(ny, nx));
+            if self.remaining_search_cnt == 0 {
+                return;
             }
         }
-        if exist_next {
-            let (ny, nx) = (
-                (sy + DIR[best_dir].0) as usize,
-                (sx + DIR[best_dir].1) as usize,
-            );
-            self.seen[self.tile[ny][nx]] = true;
-            answer += DIR_STRING[best_dir];
-            score += self.score[ny][nx];
-            answer += self.exec(Point(ny as isize, nx as isize)).as_str();
-        }
-        answer
+
+        self.seen[self.tile[y as usize][x as usize]] = false;
+        self.now_score -= self.score[y as usize][x as usize];
+        self.now_path.pop();
     }
     fn in_field(&self, i: isize, j: isize) -> bool {
-        0 <= i && i < self.H as isize && 0 <= j && j < self.W as isize
+        0 <= i && i < H as isize && 0 <= j && j < W as isize
+    }
+    fn answer(&self) -> String {
+        let mut answer = String::new();
+        for i in 0..self.best_path.len() - 1 {
+            for k in 0..4 {
+                if self.best_path[i + 1].0 - self.best_path[i].0 == DIR[k].0
+                    && self.best_path[i + 1].1 - self.best_path[i].1 == DIR[k].1
+                {
+                    answer += DIR_STRING[k];
+                }
+            }
+        }
+        answer
     }
 }

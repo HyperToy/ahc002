@@ -31,10 +31,11 @@ do
 done
 echo "execution done"
 
-if [ "$loop_stop" -lt 99 ]; then
+vis_stop_default=19
+if [ "$loop_stop" -lt "$vis_stop_default" ]; then
     vis_stop="$loop_stop"
 else
-    vis_stop=99
+    vis_stop=$vis_stop_default
 fi
 echo "<html><body>" > vis.html
 for i in `seq -f '%04g' 0 $vis_stop`

@@ -3,4 +3,20 @@
         "proconio"
     ],
     "editor.formatOnSave": true,
+    "accessibility.signals.lineHasError": {
+        "sound": "off"
+    },
+    "accessibility.signals.lineHasWarning": {
+        "sound": "off",
+        "announcement": "auto"
+    },
+    "accessibility.signals.diffLineInserted": {
+        "sound": "off"
+    },
+    "accessibility.signals.diffLineDeleted": {
+        "sound": "off"
+    },
+    "accessibility.signals.diffLineModified": {
+        "sound": "off"
+    },
 }
