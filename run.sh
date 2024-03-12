@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cargo build -r
+cargo build -r --features local
 cd tools/
 mkdir -p vis
 cargo build -r
