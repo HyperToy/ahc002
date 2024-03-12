@@ -4,7 +4,7 @@
 // #![allow(unused_assignments)]
 
 use proconio::input;
-use rand::Rng;
+use rand::{seq::SliceRandom, Rng};
 
 // ↓ → ↑ ←
 const DIR: [(isize, isize); 4] = [(1, 0), (0, 1), (-1, 0), (0, -1)];
@@ -29,7 +29,7 @@ fn main() {
     let mut update_count = 0;
 
     let time_keeper = TimeKeeper::new(1.8);
-    while !time_keeper.isTimeOver() {
+    while !time_keeper.is_time_over() {
         loop_count += 1;
         // 今のパスの中で壊す部分パスの長さ。
         let delete_path_length = rng.gen_range(1..solver.best_path.len() / 10);
@@ -51,12 +51,11 @@ fn main() {
         let mut part_solver = DfsPartSolver::new(
             tile.clone(),
             score.clone(),
-            solver.best_path[start_path_id],
             solver.best_path[end_path_id],
             now_seen,
             remaining_search_cnt,
         );
-        part_solver.dfs(solver.best_path[start_path_id]);
+        part_solver.dfs(solver.best_path[start_path_id], &mut rng);
 
         let next_score = part_solver.best_score;
         let diff = next_score - now_score;
@@ -98,7 +97,7 @@ impl TimeKeeper {
         }
     }
     #[inline]
-    fn isTimeOver(&self) -> bool {
+    fn is_time_over(&self) -> bool {
         let elapsed_time = self.start_time.elapsed().as_nanos() as f64 * 1e-9;
         #[cfg(feature = "local")]
         {
@@ -212,7 +211,6 @@ impl DfsPartSolver {
     fn new(
         tile: Vec<Vec<usize>>,
         score: Vec<Vec<i32>>,
-        start: Point,
         target: Point,
         seen: Vec<bool>,
         remaining_search_cnt: usize,
@@ -229,7 +227,7 @@ impl DfsPartSolver {
             target,
         }
     }
-    fn dfs(&mut self, point: Point) -> () {
+    fn dfs<R: Rng>(&mut self, point: Point, rng: &mut R) -> () {
         let (y, x) = (point.0 as usize, point.1 as usize);
         if !self.seen[self.tile[y][x]] {
             self.now_path.push(point);
@@ -243,8 +241,10 @@ impl DfsPartSolver {
         }
         if point != self.target {
             let (y, x) = (y as isize, x as isize);
-            for k in (0..4).rev() {
-                let (ny, nx) = (y + DIR[k].0, x + DIR[k].1);
+            let mut v = [0, 1, 2, 3];
+            v.shuffle(rng);
+            for k in 0..4 {
+                let (ny, nx) = (y + DIR[v[k]].0, x + DIR[v[k]].1);
                 if !self.in_field(ny, nx) {
                     continue;
                 }
@@ -259,7 +259,7 @@ impl DfsPartSolver {
                 if self.seen[self.tile[ny][nx]] {
                     continue;
                 }
-                self.dfs(Point::new(ny, nx));
+                self.dfs(Point::new(ny, nx), rng);
                 if self.remaining_search_cnt == 0 {
                     return;
                 }
