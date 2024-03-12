@@ -25,10 +25,15 @@ fn main() {
     let seed = 334; // なんでや！
     let mut rng: rand::rngs::StdRng = rand::SeedableRng::seed_from_u64(seed);
 
+    let diff_min = -1.;
+    let start_temp = diff_min / 0.2_f64.ln();
+    let end_temp = diff_min / 0.00000001_f64.ln();
+
     let mut loop_count = 0;
     let mut update_count = 0;
+    // let mut bad_diffs = Vec::new();
 
-    let time_keeper = TimeKeeper::new(1.8);
+    let time_keeper = TimeKeeper::new(1.97);
     while !time_keeper.is_time_over() {
         loop_count += 1;
         // 今のパスの中で壊す部分パスの長さ。
@@ -57,9 +62,15 @@ fn main() {
         );
         part_solver.dfs(solver.best_path[start_path_id], &mut rng);
 
+        let now_temp =
+            start_temp + (end_temp - start_temp) * (time_keeper.now() / time_keeper.time_threshold);
         let next_score = part_solver.best_score;
         let diff = next_score - now_score;
-        if part_solver.best_path.len() > 0 && diff > 0 {
+        // if diff < 0 {
+        //     bad_diffs.push(diff);
+        // }
+        if part_solver.best_path.len() > 0 && rng.gen_bool((diff as f64 / now_temp).exp().min(1.0))
+        {
             update_count += 1;
             solver.seen = part_solver.seen;
 
@@ -82,6 +93,11 @@ fn main() {
         eprintln!("loop  : {}", loop_count);
         eprintln!("update: {}", update_count);
     }
+    // eprintln!(
+    //     "bad diff avg: {}",
+    //     bad_diffs.iter().sum::<i32>() / bad_diffs.len() as i32
+    // );
+    // eprintln!("{}", bad_diffs.iter().min().unwrap());
 }
 
 #[derive(Debug, Clone)]
@@ -107,6 +123,10 @@ impl TimeKeeper {
         {
             elapsed_time >= self.time_threshold
         }
+    }
+    fn now(&self) -> f64 {
+        let elapsed_time = self.start_time.elapsed().as_nanos() as f64 * 1e-9;
+        self.time_threshold / elapsed_time
     }
 }
 
