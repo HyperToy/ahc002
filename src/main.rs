@@ -25,9 +25,8 @@ fn main() {
     let seed = 334; // なんでや！
     let mut rng: rand::rngs::StdRng = rand::SeedableRng::seed_from_u64(seed);
 
-    let diff_min = -1.;
-    let start_temp = diff_min / 0.2_f64.ln();
-    let end_temp = diff_min / 0.00000001_f64.ln();
+    let start_temp = 150.;
+    let end_temp = 0.;
 
     let mut loop_count = 0;
     let mut update_count = 0;
@@ -37,10 +36,10 @@ fn main() {
     while !time_keeper.is_time_over() {
         loop_count += 1;
         // 今のパスの中で壊す部分パスの長さ。
-        let delete_path_length = rng.gen_range(1..solver.best_path.len() / 10);
+        let delete_path_length = rng.gen_range(1..solver.best_path.len() / 20);
         let start_path_id = rng.gen_range(1..solver.best_path.len() - delete_path_length);
         let end_path_id = start_path_id + delete_path_length;
-        let remaining_search_cnt = 5 * delete_path_length;
+        let remaining_search_cnt = 4 * delete_path_length;
 
         let mut now_seen = vec![false; H * W];
         let mut now_score = 0;

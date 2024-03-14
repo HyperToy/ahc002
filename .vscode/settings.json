@@ -1,7 +1,4 @@
 {
-    "cSpell.words": [
-        "proconio"
-    ],
     "editor.formatOnSave": true,
     "accessibility.signals.lineHasError": {
         "sound": "off"
@@ -19,4 +16,11 @@
     "accessibility.signals.diffLineModified": {
         "sound": "off"
     },
+    "cSpell.words": [
+        "rngs",
+        "proconio",
+        "nanos",
+        "Seedable",
+        "itertools"
+    ],
 }
